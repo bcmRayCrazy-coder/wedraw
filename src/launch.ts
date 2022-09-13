@@ -2,6 +2,7 @@ import { program } from 'commander';
 
 import fs from 'fs-extra';
 import path from 'path';
+import main from './main';
 
 interface Package {
     name: string;
@@ -15,7 +16,9 @@ interface Package {
     devDependencies: Record<string, string>;
 }
 
-const packageInfo: Package = fs.readJsonSync(path.join(__dirname,'../', 'package.json'));
+const packageInfo: Package = fs.readJsonSync(
+    path.join(__dirname, '../', 'package.json')
+);
 
 // for cli
 
@@ -25,3 +28,5 @@ program
     .name(packageInfo.name);
 
 program.parse();
+
+main();
