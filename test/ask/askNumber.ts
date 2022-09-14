@@ -1,5 +1,5 @@
-import {askColor} from '../../src/lib/void/ask';
+import { askNumber } from '../../src/lib/void/ask';
 async function main() {
-    console.log(await askColor("color queustion"));
+    console.log(await askNumber("number question",100));
 }
 main();

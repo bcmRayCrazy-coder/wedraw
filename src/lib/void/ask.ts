@@ -17,6 +17,35 @@ var colorList: ColorList = {
     white: new RGBAColor(255, 255, 255, 1),
 };
 
+/**
+ * Convert hex to rgba color ( a is always 1 )
+ * @param hex hex code
+ * @returns {RGBAColor} The converted color
+ */
+function hexToRgba(hex: string):RGBAColor {
+    var result: RegExpExecArray | null =
+        /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    // return result ? {
+    //   r: parseInt(result[1], 16),
+    //   g: parseInt(result[2], 16),
+    //   b: parseInt(result[3], 16)
+    // } : null;
+    return result ? new RGBAColor(
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+        1
+    ):new RGBAColor(0,0,0,1);
+}
+
+/**
+ * Ask user a question and let user to input something
+ * @param message Message display
+ * @param _default Default value
+ * @param answer_suffix Suffix of the answer
+ * @param validate A function to validate the input
+ * @returns User input
+ */
 async function ask(
     message: string,
     _default?: string,
@@ -42,6 +71,13 @@ async function ask(
     ).ask;
 }
 
+/**
+ * Ask and let user input a number
+ * @param message Message display
+ * @param max Max number
+ * @param min Min number
+ * @returns Number user input
+ */
 async function askNumber(
     message: string,
     max?: number,
@@ -50,17 +86,19 @@ async function askNumber(
     console.log(message + (min || max) ? `(${min || ''}~${max || ''})` : '');
     return (
         await inquirer.prompt({
-            type: 'number',
+            type: 'input',
             name: 'ask',
             message:
-                message + (min || max) ? `(${min || ''}~${max || ''})` : '',
+                message +
+                ' ' +
+                (min || max ? chalk.grey(`(${min || ''}~${max || ''})`) : ''),
             validate(input: string): boolean | string {
                 var num = Number(input);
 
                 if (isNaN(num)) return 'Not a number';
 
                 if (min && num < min) return 'Must bigger than ' + min;
-                if (max && num < max) return 'Must smaller than ' + max;
+                if (max && num > max) return 'Must smaller than ' + max;
 
                 return true;
             },
@@ -68,12 +106,19 @@ async function askNumber(
     ).ask;
 }
 
+/**
+ * Ask and let user input a color
+ * @param message Message display
+ * @param sourceColor Default color
+ * @returns {RGBAColor} The color user input ( a is always 1 )
+ */
 async function askColor(
     message: string,
     sourceColor: RGBAColor = new RGBAColor(0, 0, 0, 1)
 ): Promise<RGBAColor> {
     var color: RGBAColor = sourceColor;
 
+    // How user input a color
     var typeChoices: string[] = [
         'Select an usefull color',
         'Enter HEX value',
@@ -107,8 +152,23 @@ async function askColor(
                     message: 'Select a color',
                 })
             ).color;
-            console.log(_color);
-            break;
+            _color = chalk.reset(_color);
+            console.log(_color, colorList[_color]);
+            return colorList[_color] || new RGBAColor(255, 255, 255, 1);
+        case 1:
+            // Enter hex
+            var hex: string = await ask(
+                'Enter HEX',
+                '#000000',
+                undefined,
+                (input: string): string | boolean => {
+                    if (new RegExp(/#[0-9a-fA-F]{1,6}$/g).test(input)) {
+                        return true;
+                    }
+                    return 'Not a hex';
+                }
+            );
+            color = hexToRgba(hex);
     }
     return color;
 }
